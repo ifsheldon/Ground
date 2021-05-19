@@ -1,3 +1,11 @@
+## Prereq
+
+```
+flask
+flask-cors
+pytorch
+```
+
 ## Test
 
 1. run `server.py` in background
@@ -8,6 +16,7 @@
 
 - Change LR with time
 - Change any value with time
+- Revert to a previous state
 
 ## Use
 

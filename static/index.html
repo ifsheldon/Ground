@@ -41,7 +41,7 @@
         <hr>
         Logging <button v-on:click="clearHistory" type="button">Clear</button> <br>
         <li v-for="event in history">
-      {{ event.time }} - {{event.content}}
+      {{ event.time }} - {{event.content}} <button v-on:click="revertTo(event.content)" type="button">Revert To</button>
 
         </li>
 
@@ -134,6 +134,9 @@
               this.info = err
               this.history[0].note = "ERROR" + this.history[0].note
             })
+        },
+        revertTo: function(jsonContent) {
+            editor.set(jsonContent);
         }
       },
       watch: {
