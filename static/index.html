@@ -1,0 +1,173 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+    <!-- when using the mode "code", it's important to specify charset utf-8 -->
+    <meta charset="utf-8">
+    <title>HACK!</title>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/vue"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/9.4.1/jsoneditor.css" integrity="sha512-cC1pvPq3s1SHRrOj6iqqY7wgIY1rc71D6WUrL6Tkd1jDpVOZlfQl3ybwwBos8ktkZAK/iwQ4nWj/qUhlZ/rxrw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/9.4.1/jsoneditor.js" integrity="sha512-QRl0K4rZwPYJ6cIDnAWqZBJdrTSDKz8qQylMLWBJNKLSk0fJdyRY1PFs9Mg0fkCibIFV4TWcYw2r/5tjTkscow==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://bgrins.github.io/filereader.js/filereader.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2014-11-29/FileSaver.min.js"></script>
+</head>
+<body>
+
+    <div id="jsoneditor"></div>
+
+    <input type="file" id="loadDocument" value="Load"/>
+    <input type="button" id="saveDocument" value="Save" />
+
+    <div id="app">
+        {{message}}
+
+        <hr>
+
+
+
+        <label for="remote_address">Remote Address: </label>
+        <input v-model="remote_address" id="remote_address" type="text"> <br>
+        <button v-on:click="readConfig" type="button">Read</button>
+        <button v-on:click="writeConfig" type="button">Write</button>
+
+
+        <!-- <button type="button">Import</button>
+        <button type="button">Export</button> -->
+        {{info}}
+        {{editor_content}}
+
+
+        <hr>
+        Logging <button v-on:click="clearHistory" type="button">Clear</button> <br>
+        <li v-for="event in history">
+      {{ event.time }} - {{event.content}}
+
+        </li>
+
+    </div>
+
+
+</body>
+
+<script>
+    // create the editor
+    const container = document.getElementById("jsoneditor")
+    const options = {}
+    const editor = new JSONEditor(container, options)
+
+    // set json
+    // const initialJson = {
+    //         "Array": [1, 2, 3],
+    //         "Boolean": true,
+    //         "Null": null,
+    //         "Number": 123,
+    //         "Object": {"a": "b", "c": "d"},
+    //         "String": "Hello World"
+    //     }
+    // editor.set(initialJson)
+
+    // get json
+    const updatedJson = editor.get()
+
+
+    // Load a JSON document
+  FileReaderJS.setupInput(document.getElementById('loadDocument'), {
+    readAsDefault: 'Text',
+    on: {
+      load: function (event, file) {
+          console.log(event.target.result)
+        editor.setText(event.target.result)
+      }
+    }
+  })
+
+  // Save a JSON document
+  document.getElementById('saveDocument').onclick = function () {
+    // Save Dialog
+    let fname = window.prompt("Save as...")
+
+    // Check json extension in file name
+    if (fname.indexOf(".") === -1) {
+      fname = fname + ".json"
+    } else {
+      if (fname.split('.').pop().toLowerCase() === "json") {
+        // Nothing to do
+      } else {
+        fname = fname.split('.')[0] + ".json"
+      }
+    }
+    const blob = new Blob([editor.getText()], {type: 'application/json;charset=utf-8'})
+    saveAs(blob, fname)
+  }
+
+    var app = new Vue({
+      el: '#app',
+      data: {
+        message: 'Crappy Pytorch hack!',
+        remote_address: "",
+        history: [],
+        info: "",
+        // editor_content: ""
+      },
+      methods: {
+        clearHistory: function () {
+          console.log("pressed!")
+          this.history = []
+          // localStorage.history = []
+        },
+        readConfig: function() {
+            axios
+            .get(this.remote_address + "/get")
+            .then(response => {editor.set(response.data); this.info="read success!";  }  )
+            .catch(err => {
+              this.info = err
+              this.history[0].note = "ERROR" + this.history[0].note
+            })
+        },
+        writeConfig: function() {
+            this.history.unshift({ "time": new Date(), "content": editor.get() })
+            axios
+            .post(this.remote_address + "/set", editor.get())
+            .then(response => {this.info="write success!";  }  )
+            .catch(err => {
+              this.info = err
+              this.history[0].note = "ERROR" + this.history[0].note
+            })
+        }
+      },
+      watch: {
+        history(new_history) {
+          localStorage.pytorch_hack = JSON.stringify(new_history)
+        }
+      },
+      mounted() {
+        if (localStorage.pytorch_hack) {
+          this.history = JSON.parse(localStorage.pytorch_hack)
+          console.log(localStorage.pytorch_hack)
+        }
+
+        this.remote_address = location.protocol + '//' + location.host + location.pathname;
+
+      },
+      computed: {
+        local_storage_size: function(){
+          var total = 0;
+          for (var x in localStorage) {
+              // Value is multiplied by 2 due to data being stored in `utf-16` format, which requires twice the space.
+              var amount = (localStorage[x].length * 2) / 1024 / 1024;
+              if (!isNaN(amount) && localStorage.hasOwnProperty(x)) {
+                  // console.log(x, localStorage.getItem(x), amount);
+                  total += amount;
+              }
+          }
+         return total.toFixed(2);
+        },
+        editor_content: function() {
+            editor.get()
+        }
+      }
+    })
+</script>
+
+</html>
