@@ -30,6 +30,7 @@
         <input v-model="remote_address" id="remote_address" type="text"> <br>
         <button v-on:click="readConfig" type="button">Read</button>
         <button v-on:click="writeConfig" type="button">Write</button>
+        <button v-on:click="readInit" type="button">Read Init</button>
 
 
         <!-- <button type="button">Import</button>
@@ -37,6 +38,8 @@
         {{info}}
         {{editor_content}}
 
+        <hr>
+        Init: {{init_info}} 
 
         <hr>
         Logging <button v-on:click="clearHistory" type="button">Clear</button> <br>
@@ -108,6 +111,7 @@
         remote_address: "",
         history: [],
         info: "",
+        init_info: ""
         // editor_content: ""
       },
       methods: {
@@ -116,9 +120,18 @@
           this.history = []
           // localStorage.history = []
         },
+        readInit: function() {
+            axios
+            .get(this.remote_address + "/init")
+            .then(response => {this.init_info = response.data; this.info="read init success!";  }  )
+            .catch(err => {
+              this.info = err
+              this.history[0].note = "ERROR" + this.history[0].note
+            })
+        },
         readConfig: function() {
             axios
-            .get(this.remote_address)
+            .get(this.remote_address + "/json")
             .then(response => {editor.set(response.data); this.info="read success!";  }  )
             .catch(err => {
               this.info = err
@@ -128,7 +141,7 @@
         writeConfig: function() {
             this.history.unshift({ "time": new Date(), "content": editor.get() })
             axios
-            .post(this.remote_address, editor.get())
+            .post(this.remote_address + "/json", editor.get())
             .then(response => {this.info="write success!";  }  )
             .catch(err => {
               this.info = err
@@ -150,7 +163,8 @@
           console.log(localStorage.pytorch_hack)
         }
 
-        this.remote_address = location.protocol + '//' + location.host + "/json";
+        this.remote_address = location.protocol + '//' + location.host;
+        this.readInit();
 
       },
       computed: {
