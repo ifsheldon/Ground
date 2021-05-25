@@ -2,7 +2,7 @@ import web
 
 from . import page
 
-import multiprocessing
+import multiprocess as multiprocessing
 
 class Webui(object):
   def __init__(self, parser, title="Argparse Web UI"):
