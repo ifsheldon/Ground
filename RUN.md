@@ -1,26 +1,39 @@
+## OS
+Linux only!
+Something strange with multiprocess currently on Windows. 
+
 ## Prereq
 
 ```
-flask
-flask-cors
+web.py
 pytorch
 ```
 
+```
+pip install web.py
+```
+
+Thanks to `argparseweb`[Github](https://github.com/nirizr/argparseweb)
+
 ## Test
 
-1. run `server.py` in background
-2. open `ip:5000` in browser
-3. open `hack.ipynb`
+1. run `demo.py`
+2. open `ip:8080` in browser
+(Opt) open `hack.ipynb`
 
 ## What can be done?
 
-- Change LR with time
-- Change any value with time
+- Change LR with time (a special case, directly changing `optim.config`)
+- Change any value with time (need to use attribute from the specific scheduler, not elegant yet...)
 - Revert to a previous state
+- Change parameter during init (the same way of using `argparse`, thanks to `argparseweb`)
+- One thread for init & runtime
 
 ## Use
 
 ### Config File
+Currently hardcoded `a.json`.
+
 ```
 key = setting item
 value = time -> value
@@ -37,6 +50,14 @@ value = time -> value
         "50": false
     }
 }
+```
+
+### Initialization
+
+```python
+for opts in webui.Webui(parser, title="My Awesome Model trainer!").get():
+    print("options as a dict: ", opts)
+    print("Hello {name},\nthis is a simple example.".format(name=opts.name))
 ```
 
 ### In training

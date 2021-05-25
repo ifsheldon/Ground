@@ -118,7 +118,7 @@
         },
         readConfig: function() {
             axios
-            .get(this.remote_address + "/get")
+            .get(this.remote_address)
             .then(response => {editor.set(response.data); this.info="read success!";  }  )
             .catch(err => {
               this.info = err
@@ -128,7 +128,7 @@
         writeConfig: function() {
             this.history.unshift({ "time": new Date(), "content": editor.get() })
             axios
-            .post(this.remote_address + "/set", editor.get())
+            .post(this.remote_address, editor.get())
             .then(response => {this.info="write success!";  }  )
             .catch(err => {
               this.info = err
@@ -150,7 +150,7 @@
           console.log(localStorage.pytorch_hack)
         }
 
-        this.remote_address = location.protocol + '//' + location.host + location.pathname;
+        this.remote_address = location.protocol + '//' + location.host + "/json";
 
       },
       computed: {
