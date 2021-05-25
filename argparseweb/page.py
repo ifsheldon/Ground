@@ -9,6 +9,8 @@ import collections
 import web
 from web.template import test
 
+init_file = "init_config.json"
+import json
 
 class WebuiPage(object):
   _parser = None
@@ -100,6 +102,10 @@ class WebuiPage(object):
       # sys.stdout, old_stdout = stdout, sys.stdout
       if self._parsed:
         arg = self._parser.parse_args(args=arg)
+      
+      with open(init_file, "w", encoding="utf8") as run_file:
+        json.dump(vars(arg), run_file)
+
       result = self._dispatch(arg)
       # print("here1")
 
@@ -118,7 +124,7 @@ class WebuiPage(object):
     #   if old_stdout:
     #     sys.stdout = old_stdout
     # print("here3")
-    return 'Done! <br/> Click to redirect to config page: <a href="/static/config.html">/static/config.html</a>'
+    return 'Done! <br/> Click to redirect to config page: <a href="/static/config.html">/static/config.html</a> <br/> Or just wait for automatic redirect <meta http-equiv="refresh" content="0.5; url=/static/config.html">'
     # return u"Running: {}\nErrors: {}\nResult: {}\nOutput:\n{}".format(arg, stderr.getvalue(), result, stdout.getvalue()).replace("\n","<br/>")
 
   def get_base_id(self, action):
