@@ -4,6 +4,10 @@ from . import page
 
 import multiprocess as multiprocessing
 
+import webbrowser
+
+config_file = "a.json"
+
 class Webui(object):
   def __init__(self, parser, title="Argparse Web UI"):
     self._parser = parser
@@ -27,19 +31,34 @@ class Webui(object):
       _title = self._title
 
     class JsonHandler:
+      def __init__(self):
+          self.filename = None
+
+      def check_path(self):
+          if "json" in web.ctx.fullpath:
+            self.filename = config_file
+          elif "init" in web.ctx.fullpath:
+            self.filename = page.init_file
+          
+
       def GET(self):
-          with open("a.json","r", encoding="utf8") as f:
+          self.check_path()
+          
+          with open(self.filename,"r", encoding="utf8") as f:
               content = f.readlines()
           return "".join(content)
       
       def POST(self):
+          self.check_path()
+
+
           print("received:", web.data().decode("utf8"))
-          with open("a.json","w", encoding="utf8") as f:
+          with open(self.filename,"w", encoding="utf8") as f:
               f.write(web.data().decode("utf8"))
           return "written"
 
-    urls = ('/', 'index', '/json', 'JsonHandler')
-    classes = {'index': WebuiPageWrapper, 'JsonHandler': JsonHandler}
+    urls = ('/', 'index', '/json', 'JsonHandler', "/init", 'init')
+    classes = {'index': WebuiPageWrapper, 'JsonHandler': JsonHandler, 'init': JsonHandler}
 
     return web.application(urls, classes)
 
@@ -57,6 +76,8 @@ class Webui(object):
     app = self.app(dispatch=results.put, parsed=True)
     t = multiprocessing.Process(target=app.run)
     t.start()
+
+    webbrowser.open_new_tab("http://localhost:8080")
 
     # stop condition: if count is a number decrease and loop until 0,
     #   if count is True, loop forever
