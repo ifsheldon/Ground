@@ -1,0 +1,204 @@
+$def with (form)
+<html>
+<head>
+  <style>
+  table { 
+    width: 100%; 
+    border-collapse: collapse; 
+  }
+  tr.help { 
+    background: #eee; 
+  }
+  th { 
+    background: #555; 
+    color: white; 
+    font-weight: bold; 
+  }
+  td, th { 
+    padding: 6px; 
+    border: 1px solid #ccc; 
+    text-align: left; 
+  }
+  </style>
+
+  <script type="text/javascript">
+  function update_optionals()
+  {
+    $for input in form.inputs:
+      $if input.disposition == "optional" and input.nargs != 0:
+        update_optional('$input.id');
+  }
+
+  function update_show(selector)
+  {
+    document.getElementById('table').className = 'showbase show'+selector.value;
+    elements = document.getElementById('form').elements;
+    for (var i=0; i < elements.length; i++)
+    {
+      element = elements[i];
+      if (element.className != '')
+      {
+        element.disabled = element.className != selector.value;
+      }
+    }
+    update_optionals();
+  }
+
+  function update_optional(optional_id, force_check)
+  {
+    checkbox=document.getElementById(optional_id+'_checkbox')
+    if (force_check === true && checkbox.checked == false)
+    {
+      checkbox.checked = true;
+    }
+
+    elements = document.getElementsByName(optional_id);
+    for (i = 0; i < elements.length ; i++)
+    {
+      element = elements[i]
+      if (checkbox.checked && !checkbox.disabled)
+      {
+        element.disabled = false;
+        if (element.value == element.getAttribute('default'))
+        {
+          element.value = element.defaultValue;
+        }
+      }
+      else
+      {
+        element.disabled = true;
+        if (element.value == element.defaultValue)
+        {
+          element.value = element.getAttribute('default');
+        }
+      }
+    }
+  }
+
+  function update_onload()
+  {
+    $for input in form.inputs:
+      $if input.subparser:
+        update_show(document.getElementsByName('$input.name')[0]);
+    update_optionals();
+  }
+
+  function decrease_inputs(div_id)
+  {
+    div = document.getElementById(div_id);
+
+    count = parseInt(div.getAttribute('count'));
+    min = parseInt(div.getAttribute('min'));
+    if (count <= min)
+      return;
+
+    div.removeChild(div.lastChild);
+
+    div.setAttribute('count', count - 1);
+  }
+
+  function increase_inputs(div_id)
+  {
+    div = document.getElementById(div_id);
+
+    count = parseInt(div.getAttribute('count'));
+    max = parseInt(div.getAttribute('max'));
+    if (count >= max)
+      return;
+
+    input = div.getAttribute('input_field');
+    tmp_div = document.createElement('div');
+    tmp_div.innerHTML = input;
+    div.appendChild(tmp_div.firstChild);
+
+    div.setAttribute('count', count + 1);
+  }
+
+  </script>
+  <style type="text/css">
+  table tr { display:none; }
+  $ classes = set(input.attrs.get('class') for input in form.inputs)
+  $for c in classes:
+    $if (c == '') : $ c = 'base'
+    Table.show$c tr.$c {display:table-row; }
+  </style>
+</head>
+<body onload="javascript: update_onload();">
+<form id="form" method="post">
+$if not form.valid:
+  <p class="error">Error(s):
+    <ul>
+    $if form.note: <li>$:form.note</li>
+    $for input in form.inputs:
+      $if input.note:
+        <li>$:input.note</li>
+    </ul>
+  </p>
+<h3>$form.title</h3> <br/>
+<table border=1 class="showbase" id="table">
+$for input in form.inputs:
+  $ nargs = input.nargs
+  $if isinstance(nargs, str) and nargs.isdigit():
+    $ nargs = int(nargs)
+  $ c = (input.attrs.get('class') if input.attrs.get('class') else 'base')
+  $ option_checkbox = False
+  $if input.disposition == "optional":
+    $if nargs == 0:
+      $ nargs = 1
+    $else:
+      $ option_checkbox = True
+  $if input.choices:
+    $ nargs = 1
+  $if type(nargs) == int:
+    $ input_fixed = True
+    $ input_count = nargs
+  $elif nargs == "+":
+    $ input_fixed = False
+    $ input_min = 1
+    $ input_max = ""
+  $elif nargs == "*":
+    $ input_fixed = False
+    $ input_min = 0
+    $ input_max = ""
+  $elif nargs == "?":
+    $ input_fixed = False
+    $ input_min = 0
+    $ input_max = 1
+  <tr class="$c input">
+    $if input.help:
+      <th rowspan="2">
+    $else:
+      <th>
+    $if option_checkbox:
+      <input type="checkbox" id="$(input.id)_checkbox" class="$input.attrs.get('class')" onchange="javascript: update_optional('$input.id');" />
+    $input.description
+    </th>
+    $if option_checkbox:
+      <td onclick="javascript: update_optional('$(input.id)', true);">
+    $else:
+      <td>
+    $if input_fixed:
+      $for i in range(input_count):
+        $:input.render()
+    $else:
+      <button type="button" onclick="javascript: decrease_inputs('$(input.id)_varying')">-</button>
+      <div id="$(input.id)_varying" min="$(input_min)" count="$(input_min)" max="$(input_max)" input_field="$input.render()"></div>
+      <button type="button" onclick="javascript: increase_inputs('$(input.id)_varying')">+</button>
+    </td>
+  </tr>
+  $if input.help:
+    <tr class="$c help">
+      $if option_checkbox:
+        <td colspan=2 onclick="javascript: update_optional('$(input.id)', true);">
+      $else:
+        <td colspan=2>
+      $input.help
+      </td>
+    </tr>
+<tr class="base">
+  <th colspan=2><input type=submit value=Submit /></th>
+</tr>
+</table>
+</form>
+</body>
+</html>
